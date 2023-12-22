@@ -4,13 +4,20 @@ from langchain.embeddings import OpenAIEmbeddings
 from utils import load_pdfs, get_chunks
 
 
+def remove_surrogates(text):
+    return text.encode('utf-8', 'ignore').decode('utf-8')
+
+
 pdf_chunks = []
+
+
 for path in os.listdir("data"):
     print("Processing file: ", path)
     if path.endswith(".pdf"):
         pdf_content = load_pdfs(os.path.join("data", path))
         splitted_text = get_chunks(pdf_content)
-        pdf_chunks.extend(splitted_text)
+        clean_text = [remove_surrogates(text) for text in splitted_text]
+        pdf_chunks.extend(clean_text)
 
 # need to implement markdown reader. Problem with NLTK
 

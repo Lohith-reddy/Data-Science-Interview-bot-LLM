@@ -2,7 +2,7 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
-from langchain.llms import VertexAI
+#from langchain.llms import VertexAI
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel
 from typing import List

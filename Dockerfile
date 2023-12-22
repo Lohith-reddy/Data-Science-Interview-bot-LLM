@@ -1,4 +1,4 @@
-FROM python:3.11-buster as builder
+FROM python:3-alpine as builder
 
 RUN curl -sSL https://install.python-poetry.org | python - && pip install poetry
 
