@@ -31,7 +31,9 @@ def get_chunks(text, chunk_size=1000, chunk_overlap=10):
         chunk_size=chunk_size, chunk_overlap=chunk_overlap, separators=["\.", "\n"]
     )
     split_data = r_splitter.split_text(text)
-    return split_data
+    # Remove tabs and newline characters
+    cleaned_chunks = [chunk.replace('\t', '').replace('\n', '') for chunk in split_data]
+    return cleaned_chunks
 
 
 def get_projects(resume_content):
