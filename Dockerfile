@@ -23,8 +23,8 @@ ENV VIRTUAL_ENV=.venv \
 # vectorDB will be hosted on cloud
 
 COPY --from=builder /app/.venv /app/.venv
-COPY streamlit_app.py utils.py chatbot_helper.py docs pyproject.toml README.md .env /app/
+COPY st_app docs pyproject.toml README.md .env /app/
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "/app/streamlit_app.py"]
+CMD ["streamlit", "run", "/app/st_app/streamlit_app.py"]

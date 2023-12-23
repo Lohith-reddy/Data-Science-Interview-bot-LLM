@@ -1,0 +1,9 @@
+---
+- hosts: centos
+  become: true
+  tasks:
+  - name: Install docker
+    yum: name=docker state=latest
+  - name: Start flask app on port 8501 # change to streamlit port
+    shell:
+      cmd: docker run -dit -p 8501:8501 /st:v2.0
