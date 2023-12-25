@@ -1,8 +1,0 @@
-- hosts: centos
-  become: true
-  tasks:
-    - name: Install docker
-      yum: name=docker state=latest
-    - name: Start flask app on port 8501
-      shell:
-        cmd: docker run -dit -p 8501:8501 /st:latest

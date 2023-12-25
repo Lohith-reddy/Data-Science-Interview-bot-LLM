@@ -136,13 +136,16 @@ dmypy.json
 .pyre/
 
 
-# custom
-Resume_samples/
-Experiment_notebooks/
-VectorDB/
-.env
+#data
 data/
 docs/
+temp/
+VectorDB/
+Resume_samples/
+
+# custom
+Experiment_notebooks/
+.env
 .vscode/
 __pycache__/
 .ipynb
@@ -153,3 +156,6 @@ config.json
 .github
 .idea
 ```
+
+# Credential
+*.tfvars

@@ -4,7 +4,7 @@
 
 The Griller is a datascience interview bot designed to assist in conducting technical interviews for data science positions. It provides a structured interview process, allowing users to configure the interview based on their specific requirements.
 
-The project uses RAG with central reasoning LLM. The project is deployed as a streamlit (app on a kubernetes cluster using ansible, terraform and vault.)
+The project uses RAG with central reasoning LLM. The project is deployed as a streamlit app (on a kubernetes cluster using ansible, terraform and vault.)
 
 ## Features
 
