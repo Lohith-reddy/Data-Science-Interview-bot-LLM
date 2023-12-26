@@ -1,0 +1,89 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt: update_cache=yes
+
+    - name: Install apt-transport-https and ca-certificates
+      apt: name={{ item }} state=present
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+
+    - name: Add Docker's GPG key
+      shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+    - name: Verify Docker's GPG key
+      shell: apt-key fingerprint 0EBFCD88
+
+    - name: Add Docker's APT repository
+      shell: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+    - name: Install Docker
+      apt: name=docker-ce state=present update_cache=yes
+
+    - name: Add Kubernetes' APT repository
+      shell: |
+        curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+
+    - name: Install kubeadm, kubelet and kubectl
+      apt: name={{ item }} state=present update_cache=yes
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+
+- hosts: master
+  become: yes
+  tasks:
+    - name: Initialize Kubernetes cluster
+      shell: kubeadm init --pod-network-cidr=10.244.0.0/16
+      args:
+        creates: /etc/kubernetes/admin.conf
+
+    - name: Copy kube admin config to user's home directory
+      shell: |
+        mkdir -p $HOME/.kube
+        cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        chown $(id -u):$(id -g) $HOME/.kube/config
+
+    - name: Install Helm
+      shell: |
+        curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+        sudo apt-get install apt-transport-https --yes
+        echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+        sudo apt-get update
+        sudo apt-get install helm
+
+    - name: Create namespace for nginx
+      shell: kubectl create namespace nginx
+
+    - name: Add nginx stable repository
+      shell: helm repo add nginx-stable https://helm.nginx.com/stable
+
+    - name: Update helm repositories
+      shell: helm repo update
+
+    - name: Install nginx
+      shell: helm install my-nginx nginx-stable/nginx-ingress --namespace nginx
+
+    - name: Create namespace for vault
+      shell: kubectl create namespace vault
+
+    - name: Add hashicorp repository
+      shell: helm repo add hashicorp https://helm.releases.hashicorp.com
+
+    - name: Install vault
+      shell: helm install vault hashicorp/vault --namespace vault
+
+- hosts: workers
+  become: yes
+  tasks:
+    - name: Join node to Kubernetes cluster
+      shell: kubeadm join --token {{ hostvars['master']['kubeadm_token'] }} {{ hostvars['master']['ansible_host'] }}:6443 --discovery-token-ca-cert-hash {{ hostvars['master']['kubeadm_discovery_token_ca_cert_hash'] }}
+      args:
+        creates: /etc/kubernetes/kubelet.conf

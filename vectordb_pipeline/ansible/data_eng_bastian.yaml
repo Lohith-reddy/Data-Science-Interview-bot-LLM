@@ -1,0 +1,71 @@
+---
+- hosts: data_eng_bastian
+  become: yes
+  vars_files:
+  - vars/main.yml
+  tasks:
+    - name: Update apt
+      apt:
+        update_cache: yes
+
+    - name: Install Python
+      apt:
+        name: python3
+        state: present
+
+    - name: Install pip
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install Airflow
+      pip:
+        name: apache-airflow
+        state: present
+
+    - name: Install necessary Python packages
+      pip:
+        name:
+          - openai
+          - qdrant_client
+          - google-cloud-storage
+          - requests
+        state: present
+
+    - name: Copy scripts to remote machine
+      copy:
+        src: "{{ item }}"
+        dest: "/home/{{username}}/{{ item }}"
+        mode: '0755'
+      with_items:
+        - gcloud_setup.sh
+        - bastian_airflow_trigger.py
+        - update_db_airflow.py
+        - gcloud_function.py
+
+    - name: Provide access
+      command: >
+        gcloud compute instances set-service-account {{ instance_name }} \
+        --service-account {{ service_account_email }} \
+        --scopes cloud-platform
+
+    - name: Run gcloud_setup.sh
+      command: bash /home/{{username}}/gcloud_setup.sh
+
+    - name: Set up bastian_airflow_trigger.py as a daemon process
+      systemd:
+        name: bastian_airflow_trigger
+        state: started
+        enabled: yes
+        daemon_reload: yes
+        service: |
+          [Unit]
+          Description=Bastian Airflow Trigger
+
+          [Service]
+          ExecStart=/usr/bin/python3 /home/{{username}}/bastian_airflow_trigger.py
+          Restart=always
+          User={{username}}
+
+          [Install]
+          WantedBy=multi-user.target

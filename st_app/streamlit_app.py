@@ -1,7 +1,4 @@
 import streamlit as st
-
-# import OpenAI
-import time
 import numpy as np
 from langchain.vectorstores import Chroma
 from langchain.embeddings import OpenAIEmbeddings
@@ -9,6 +6,7 @@ from langchain.output_parsers.structured import StructuredOutputParser, Response
 import pandas as pd
 import os
 import warnings
+from qdrant_client import QdrantClient
 
 import chatbot_helper as ch
 
@@ -32,10 +30,10 @@ with st.sidebar:
 
 if resume_content and job_desc:
     with st.spinner("Processing Resume and Job Description..."):
-    # Process the resume
+        # Process the resume
         skills, projects = ch.extract_info(resume_content, job_desc)
         if skills == []:
-            skills = ["Python", "Java", "SQL", " R", " C++", "Hadoop", "Spark", "MATLAB", "Excel",
+            skills  =  ["Python", "Java", "SQL", " R", " C++", "Hadoop", "Spark", "MATLAB", "Excel",
                         "Tableau", "Power BI", "SAS", "SPSS", "Machine Learning", "Deep Learning",
                         "Natural Language Processing", "Computer Vision", "Linear Regression",
                         "Logistic Regression", "Decision Tree", "Random Forest", "XGBoost",
@@ -81,6 +79,13 @@ questions_asked = []
 project_questions_asked = []
 
 db = Chroma(persist_directory="docs/chroma/", embedding_function=embedding)
+
+
+qdrant_client = QdrantClient(
+    url="http://qdrant-service:6333",
+    port=6333,
+    api_key=os.getenv("QDRANT_API_KEY"),
+)
 
 # Generate a new response if last message is not from assistant
 # Initialising and directing conversation

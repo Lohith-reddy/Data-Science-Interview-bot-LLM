@@ -1,0 +1,81 @@
+---
+- hosts: bastion
+  become: yes
+  tasks:
+    - name: Install pip
+      apt: 
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Install necessary Python libraries
+      pip:
+        name: 
+          - requests
+          - google-auth
+        executable: pip3
+
+    - name: Install unzip (required to install Terraform)
+      apt:
+        name: unzip
+        state: present
+
+    - name: Download Terraform
+      get_url:
+        url: https://releases.hashicorp.com/terraform/0.14.7/terraform_0.14.7_linux_amd64.zip
+        dest: /tmp/terraform.zip
+
+    - name: Extract Terraform binary
+      unarchive:
+        src: /tmp/terraform.zip
+        dest: /usr/local/bin/
+        remote_src: yes
+
+    - name: Run Terraform script
+      command: terraform apply -auto-approve
+      args:
+        chdir: terraform/gcp_config.tf
+
+    - name: Install Ansible collection
+      command: ansible-galaxy collection install google.cloud
+
+    - name: Create directory for Ansible GCP dynamic inventory
+      file:
+        path: /etc/ansible
+        state: directory
+
+    - name: Create gcp_compute.yml file
+      copy:
+        dest: /etc/ansible/gcp_compute.yml
+        content: |
+          plugin: gcp_compute
+          projects:
+            - griller-490718
+          auth_kind: serviceaccount
+          service_account_file: /home/ansible/ansible-sa.json
+          keyed_groups:
+            - key: labels['environment']
+              prefix: env
+            - key: labels['application']
+              prefix: app
+          hostnames:
+            - name
+          compose:
+            ansible_host: networkInterfaces[0].accessConfigs[0].natIP
+
+    - name: Create ansible.cfg file
+      copy:
+        dest: /etc/ansible/ansible.cfg
+        content: |
+          [defaults]
+          inventory = /etc/ansible/gcp_compute.yml
+          enable_plugins = gcp_compute
+
+    - name: Install kubectl
+      get_url:
+        url: https://storage.googleapis.com/kubernetes-release/release/v1.20.0/bin/linux/amd64/kubectl
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
+    - name: Apply Kubernetes configuration
+      command: kubectl apply -f k8.yaml
