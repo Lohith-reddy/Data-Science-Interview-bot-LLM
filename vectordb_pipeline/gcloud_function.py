@@ -15,7 +15,7 @@ def trigger_dag(event, context):
     # in the form `projects/{project_id}/topics/{topic_id}`
     topic_path = publisher.topic_path('griller-490718', topic_id)
 
-        # Create a dictionary with the event data
+    # Create a dictionary with the event data
     data = {
         'name': event['name'],
         'eventType': context.event_type
@@ -26,3 +26,4 @@ def trigger_dag(event, context):
 
     # Publish a message to the topic
     publisher.publish(topic_path, payload)
+    

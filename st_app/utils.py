@@ -26,6 +26,10 @@ def load_pdfs(path):
     return pdf_content
 
 
+def remove_surrogates(text):
+    return text.encode('utf-8', 'ignore').decode('utf-8')
+
+
 def get_chunks(text, chunk_size=1000, chunk_overlap=10):
     r_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size, chunk_overlap=chunk_overlap, separators=["\.", "\n"]
@@ -33,6 +37,7 @@ def get_chunks(text, chunk_size=1000, chunk_overlap=10):
     split_data = r_splitter.split_text(text)
     # Remove tabs and newline characters
     cleaned_chunks = [chunk.replace('\t', '').replace('\n', '') for chunk in split_data]
+    cleaned_chunks = [remove_surrogates(chunk) for chunk in cleaned_chunks]
     return cleaned_chunks
 
 

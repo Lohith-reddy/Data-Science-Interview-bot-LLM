@@ -44,3 +44,5 @@ client.add(
     collection_name="griller_qdrant",
     documents=pdf_chunks
 )
+
+# add a snapshot of the collection to snapshot_bucket

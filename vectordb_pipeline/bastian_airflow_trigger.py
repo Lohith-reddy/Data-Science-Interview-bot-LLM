@@ -16,7 +16,7 @@ def receive_message(message):
     airflow_url = 'http://your-airflow-url.com'
 
     # The ID of your DAG
-    dag_id = 'your_dag_id'
+    dag_id = 'update_qdrant_db'
 
     # Trigger the DAG run and pass the message data to the DAG
     response = requests.post(
