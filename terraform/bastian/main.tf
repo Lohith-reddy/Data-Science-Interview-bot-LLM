@@ -1,8 +1,9 @@
 resource "google_compute_instance" "bastion" {
   name         = "griller_bastion"
   machine_type = "e2-micro"
-  zone         = "us-central1-a"
+  zone         = var.zone
   tags         = ["griller_bastion"]
+  project      = var.projectid
 
   boot_disk {
     initialize_params {
@@ -22,6 +23,7 @@ resource "google_compute_instance" "bastion" {
 resource "google_compute_firewall" "bastion_allow_iap" {
   name    = "bastion-allow-iap"
   network = "bastian"
+  project = var.projectid
 
   allow {
     protocol = "tcp"
@@ -55,8 +57,8 @@ resource "google_compute_firewall" "bastion_to_cluster" {
 }
 
 resource "google_iap_tunnel_instance_iam_binding" "bastion" {
-  project = "griller-490718"
-  zone    = "us-central1-a"
+  project = var.projectid
+  zone    = var.zone
   instance = google_compute_instance.bastion.name
   role    = "roles/iap.tunnelResourceAccessor"
 

@@ -11,6 +11,7 @@ import qdrant_client
 import concurrent.futures
 from google.cloud import storage
 import requests
+import json
 
 
 def download_blob(bucket_name, source_blob_name):
@@ -69,7 +70,6 @@ def add_file_to_vectordb(**context):
     """Add a file to a VectorDB collection."""
     data = context['dag_run'].conf
     file_name = data['name']
-    event_type = data['eventType']
     collection_name = 'griller_qdrant'
     bucket_name = "griller_data"
     qdrant_client = qdrant_client.QdrantClient()
@@ -80,15 +80,8 @@ def create_snapshot():
     """Create a snapshot of the collection."""
     client = qdrant_client.QdrantClient()
     snapshot_info = client.create_full_snapshot()
-    snapshot_name = snapshot_info.name
-    collection_name = 'griller_qdrant'
-    QDRANT_URL = getenv("QDRANT_URL")
-    snapshot_url = f"{QDRANT_URL}/collections/{collection_name}/snapshots/{snapshot_name}"
-    response = requests.get(snapshot_url)
-    if response.status_code == 200:
-        print("Snapshot downloaded successfully.")
-    else:
-        print(f"Failed to download snapshot: {response.content}")
+    with open('latest_snapshot_info.json', 'w') as f:  # write the latest snapshot info to a file
+        json.dump(snapshot_info, f)
 
 
 default_args = {"start_date": datetime(2023, 12, 20),
@@ -99,9 +92,20 @@ default_args = {"start_date": datetime(2023, 12, 20),
                 'email_on_retry': False,
                 'retries': 3}
 
+
 with DAG('update_qdrant_db', default_args=default_args, schedule_interval=None) as dag:
-    add_file_task = PythonOperator(task_id='add_file_to_vectordb', python_callable=add_file_to_vectordb, provide_context=True)
-    create_snapshot_task = PythonOperator(task_id='create_snapshot', python_callable=create_snapshot, provide_context=True)
-    patch_command = "kubectl patch deployment qdrant-deployment -p \\{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"`date +'%s'`\"}}}}}"
+
+    add_file_task = PythonOperator(task_id='add_file_to_vectordb',
+                                   python_callable=add_file_to_vectordb,
+                                   provide_context=True)
+
+    create_snapshot_task = PythonOperator(task_id='create_snapshot',
+                                          python_callable=create_snapshot,
+                                          provide_context=True)
+
+    patch_command = "kubectl patch deployment qdrant-deployment -p \
+        {\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"`date +'%s'`\"}}}}}"
+
     patch_task = BashOperator(task_id='patch_k8s_deployment', bash_command=patch_command)
+
     add_file_task >> create_snapshot_task >> patch_task

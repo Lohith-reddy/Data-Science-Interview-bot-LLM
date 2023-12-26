@@ -9,10 +9,9 @@ from typing import List
 from langchain_google_genai import GoogleGenerativeAI
 import os
 from collections import Counter
-import os
 import json
 import re
-import json
+
 
 from dotenv import load_dotenv
 

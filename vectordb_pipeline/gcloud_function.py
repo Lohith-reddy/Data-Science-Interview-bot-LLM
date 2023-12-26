@@ -26,4 +26,3 @@ def trigger_dag(event, context):
 
     # Publish a message to the topic
     publisher.publish(topic_path, payload)
-    

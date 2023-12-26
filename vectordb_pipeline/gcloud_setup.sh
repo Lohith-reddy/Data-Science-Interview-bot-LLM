@@ -16,5 +16,5 @@ gcloud functions deploy db_update_function  \
 --runtime python310 \
 --trigger-resource gs://griller_data/ \
 --trigger-event google.storage.object.finalize \
---entry-point gcloud_function \
+--entry-point trigger_dag \
 --service-account $SERVICE_ACCOUNT
